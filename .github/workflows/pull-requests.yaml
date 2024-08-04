@@ -1,0 +1,32 @@
+name: Pull Requests and main Merges
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+jobs:
+  validate-pr-title:
+    name: Validate PR Title
+    runs-on: [self-hosted, qa, ubuntu]
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: Slashgear/action-check-pr-title@v4.3.0
+        with:
+          regexp: "^(Revert \")?((minor|fix|config|infra|ci|doc|spelling|dependency):|[A-Z]{2,14}-\\d+[:]?) (.*){128}\"?$"
+  pr-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v4
+        with: 
+          dot: true
+  validate-python:
+    uses: ./.github/workflows/validate-python.yaml
+  containerize:
+    uses: ./.github/workflows/build.yaml
+    with:
+      publish: ${{ github.ref == 'refs/heads/main' }}

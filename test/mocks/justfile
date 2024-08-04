@@ -1,0 +1,34 @@
+default: 
+    just --list
+
+# install python dependencies (in venv, via poetry)
+install: 
+    poetry install
+
+# update python dependencies (in venv, via poetry)
+update: 
+    poetry update
+
+# format python code
+format:
+    poetry run isort .
+    poetry run black .
+
+# lint python code
+lint:
+    poetry run flake8 .
+
+# type python code
+types:
+    poetry run mypy .
+
+# format, lint, and type check python code
+validate: format lint types
+
+# run module
+run *flags="":
+    poetry run python -m receiver {{flags}}
+
+# build image (local arch)
+build:
+    docker build . -f Dockerfile -t caller-receiver:local

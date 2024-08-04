@@ -1,0 +1,80 @@
+# -- name of the cronjob
+name: scheduled-api-call
+
+# Specifications for the image to use, shouldn't be changed
+image:
+  # -- image registry to pull from (probably shouldn't be changed)
+  registry: ghcr.io/wrossmorrow
+  # -- image registry to pull from (probably shouldn't be changed)
+  name: scheduled-api-caller
+  # -- image registry to pull from (like should be changed based on release versioning)
+  tag: latest
+  # -- image pull policy, Always is likely always fine
+  pull_policy: Always
+
+# CLI arguments to pass to the API caller code
+args:
+  # -- this host to call, no scheme (e.g., "google.com")
+  host: ~
+  # -- the port to call, if not specified, will default to 80 or 443 depending on scheme
+  port: ~
+  # -- the path to call, if not specified, will default to "/"
+  path: ~
+  # -- params to pass to the request (name/value items)
+  params: []
+  # -- use http if true, uses https by default
+  insecure: false
+  # -- the HTTP method to use, defaults to get
+  method: get
+  # -- special object for HTTP auth, must include "type" and "credentials" keys
+  auth: ~
+  # -- additional headers to pass to the request (name/value items)
+  headers: []
+  # -- the body of the request, if any; will fail if supplied for get or delete
+  body: {}
+  # -- request timeout in seconds for each attempt, defaults to 60
+  timeout: ~
+  # -- number of retries to attempt, defaults to 0 (total requests == retries + 1)
+  retries: 0
+  # -- response status codes to retry on, matching \^(000|[45]([0-9]{2}|[0-9xX][xX]))$\
+  retry_on: []
+  # -- response status codes to fail on, matching \^(000|[45]([0-9]{2}|[0-9xX][xX]))$\
+  fail_on: []
+
+# CronJob details for the job
+cron:
+  # -- the cron-style schedule to use for the job
+  schedule: ~
+  # -- the timezone as [listed here](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
+  time_zone: Etc/UTC
+  # -- The concurrency policy, most like usually restricted to none
+  concurrency: Forbid
+  # -- labels to apply to the cronjob
+  labels: {}
+  # -- annotations to apply to the cronjob
+  annotations: {}
+
+# Specifications for the actual jobs that will get spun up by the CronJob
+jobs:
+  # -- how many successful runs to execute overall
+  completions: 1
+  # -- how many runs are allowed in parallel
+  parallelism: 1
+  # -- how many times to retry a failed job
+  backoff_limit: 5
+  # -- how long to wait before removing completed jobs from kubernetes management
+  remove_after_seconds: 120
+  # -- a secret to use in envFrom for the jobs
+  secret: ~
+  # -- environment variables to pass to the jobs
+  env: []
+  # -- labels to apply to the jobs
+  labels: {}
+  # -- annotations to apply to the jobs
+  annotations: {}
+
+pods:
+  # -- labels to apply to the pods
+  labels: {}
+  # -- annotations to apply to the pods
+  annotations: {}

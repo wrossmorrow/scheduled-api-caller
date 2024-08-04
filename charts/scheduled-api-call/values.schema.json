@@ -1,0 +1,179 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "type": "object",
+  "required": [
+    "name",
+    "environment",
+    "args"
+  ],
+  "properties": {
+    "args": {
+      "type": "object",
+      "required": [
+        "host"
+      ],
+      "properties": {
+        "host": {
+          "type": "string",
+          "description": "host name, max 250 characters from [a-zA-Z0-9-_.], or env vars",
+          "pattern": "^([a-zA-Z0-9-_.]{1,250}|[a-zA-Z0-9-_.$(){}]+)$"
+        },
+        "port": {
+          "type": ["number", "null"]
+        },
+        "path": {
+          "type": ["string", "null"],
+          "pattern": "^[a-zA-Z0-9$-_.+!*'()/&?=:%]+$"
+        },
+        "insecure": {
+          "type": "boolean",
+          "default": false
+        },
+        "method": {
+          "type": "string",
+          "enum": ["get", "put", "post", "patch", "delete"]
+        },
+        "auth": {
+          "type": ["object", "null"],
+          "required": [
+            "type",
+            "credentials"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "pattern": "^[Bb](asic|earer)$"
+            },
+            "credentials": {
+              "type": "string"
+            }
+          }
+        },
+        "params": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "value"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "param name, max 64 characters from [a-zA-Z0-9-_]",
+                "pattern": "^[a-zA-Z0-9-_]{1,64}$"
+              },
+              "value": {
+                "type": ["string", "number"],
+                "description": "param value, bash or kubernetes-style env vars allowed"
+              }
+            }
+          }
+        },
+        "headers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "value"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "header name, max 64 characters from [a-zA-Z0-9-_]",
+                "pattern": "^[a-zA-Z0-9-_]{1,64}$"
+              },
+              "value": {
+                "type": ["string", "number"],
+                "description": "header value, bash or kubernetes-style env vars allowed"
+              }
+            }
+          }
+        },
+        "body": {
+          "type": ["object", "string", "null"]
+        },
+        "timeout": {
+          "type": ["number", "null"]
+        },
+        "retries": {
+          "type": "number",
+          "default": 0
+        },
+        "retry_on": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(000|[45]([0-9]{2}|[0-9xX][xX]))$"
+          }
+        },
+        "fail_on": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(000|[45]([0-9]{2}|[0-9xX][xX]))$"
+          }
+        }
+      }
+    },
+    "cron": {
+      "type": "object",
+      "required": [
+        "schedule"
+      ],
+      "properties": {
+        "schedule": {
+          "type": "string"
+        },
+        "time_zone": {
+          "type": "string"
+        },
+        "concurrency": {
+          "type": "string",
+          "enum": ["Allow", "Forbid", "Replace"]
+        }
+      }
+    },
+    "jobs": {
+      "type": "object",
+      "properties": {
+        "completions": {
+          "type": "number"
+        },
+        "parallelism": {
+          "type": "number"
+        },
+        "backoff_limit": {
+          "type": "number"
+        },
+        "remove_after_seconds": {
+          "type": "number"
+        },
+        "secret": {
+          "type": ["string", "null"],
+          "pattern": "^[a-zA-Z0-9-.]{1,253}$"
+        },
+        "env": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "value"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[A-Z][A-Z0-9_]{1,127}$"
+              },
+              "value": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

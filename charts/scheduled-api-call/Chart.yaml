@@ -1,0 +1,11 @@
+apiVersion: v2
+name: scheduled-api-call
+version: 0.1.0
+appVersion: 0.1.0
+description: Just call an API on a schedule
+home: https://github.com/wrossmorrow/scheduled-api-call
+maintainers:
+  - email: morrowwr@gmail.com
+    name: W. Ross Morrow
+type: application
+annotations: {}

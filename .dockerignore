@@ -1,0 +1,7 @@
+# Ignore everything
+*
+
+# Allow code
+!poetry.lock
+!pyproject.toml
+!caller/*

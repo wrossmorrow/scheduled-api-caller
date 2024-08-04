@@ -1,0 +1,11 @@
+source:
+  - caller/**
+build:
+  - "**/poetry.lock"
+  - "**/pyproject.toml"
+  - .dockerignore
+  - Dockerfile
+deployment:
+  - kubernetes/**
+  - .github/workflows/**
+  - charts/scheduled-api-call/**

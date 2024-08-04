@@ -1,0 +1,56 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Values.name }}
+  labels:
+    {{ .Values.cron.labels | toYaml | indent 4 }}
+  annotations: 
+    {{ .Values.cron.annotations | toYaml | indent 4 }}
+spec:
+  schedule: "{{ .Values.cron.schedule }}"
+  timeZone: {{ .Values.cron.time_zone | default "Etc/UTC" }}
+  concurrencyPolicy: {{ .Values.cron.concurrency }}
+  jobTemplate:
+    metadata:
+      labels: 
+        {{ .Values.job.labels | toYaml | indent 8 }}
+      annotations: 
+        {{ .Values.job.annotations | toYaml | indent 8 }}
+    spec:
+      completions: {{ .Values.jobs.completions }}
+      parallelism: {{ .Values.jobs.parallelism }}
+      backoffLimit: {{ .Values.jobs.backoff_limit }}
+      ttlSecondsAfterFinished: {{ .Values.jobs.remove_after_seconds }}
+      template:
+        metadata:
+          labels: 
+            {{ .Values.pods.labels | toYaml | indent 12 }}
+          annotations: 
+            {{ .Values.pod.annotations | toYaml | indent 12 }}
+        spec:
+          securityContext:
+            fsGroup: 65534
+          hostPID: true
+          restartPolicy: Never
+          containers:
+            - name: caller
+              image: {{ .Values.image.registry }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+              imagePullPolicy: {{ .Values.image.pull_policy }}
+              args: {{ include "args" . | nindent 16 }}
+              {{- if .Values.jobs.secret }}
+              envFrom:
+                - secretRef:
+                    name: {{ .Values.jobs.secret }}
+              {{- end }}
+              env:
+                {{- range .Values.jobs.env }}
+                - name : {{ .name }}
+                  value: {{ .value | quote }}
+                {{- end }}
+              volumeMounts:
+                - name: ddsocket
+                  mountPath: /var/run/datadog
+          volumes:
+            - name: ddsocket
+              hostPath:
+                path: /var/run/datadog/

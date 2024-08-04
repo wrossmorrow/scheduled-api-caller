@@ -1,0 +1,84 @@
+name: Containerize
+on:
+  workflow_call:
+    inputs:
+      registry:
+        description: 'Registry to push the image to'
+        type: string
+        default: ghcr.io/wrossmorrow
+      image_name:
+        description: 'Name of the image to build'
+        type: string
+        default: generic-api-caller
+      image_tag:
+        description: 'Tag to apply to the image'
+        type: string
+        default: latest
+      publish:
+        description: 'Push the built image to the registry'
+        type: boolean
+        default: false
+  workflow_dispatch:
+    inputs:
+      registry:
+        description: 'Registry to push the image to'
+        type: string
+        default: ghcr.io/wrossmorrow
+      image_name:
+        description: 'Name of the image to build'
+        type: string
+        default: generic-api-caller
+      image_tag:
+        description: 'Tag to apply to the image'
+        type: string
+        default: latest
+      publish:
+        description: 'Push the built image to the registry'
+        type: boolean
+        default: true
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: read
+jobs:
+  containerize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get the commit SHA(s)
+        id: tag
+        run: |
+          if [ -n "${{ inputs.image_tag }}" ]; then
+            echo "image_tag=${{ inputs.image_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "image_tag=$( git rev-parse HEAD )" >> $GITHUB_OUTPUT
+          fi
+          echo "full_sha=$( git rev-parse HEAD )" >> $GITHUB_OUTPUT
+          echo "short_sha=$( git rev-parse --short HEAD )" >> $GITHUB_OUTPUT
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: amd64,arm64
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Get current date
+        run: echo "current_date=$( date -u +%FT%T )" >> $GITHUB_ENV
+      - name: Build and (Maybe) Push
+        uses: docker/build-push-action@v4
+        with:
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=github.com/${{ github.repository }}
+            com.github.wrossmorrow.build.date=${{ env.current_date }}
+            com.github.wrossmorrow.build.run_id=${{ github.run_id }}
+            com.github.wrossmorrow.build.run=${{ github.run_number }}
+            com.github.wrossmorrow.build.ref=${{ github.ref }}
+            com.github.wrossmorrow.build.event=${{ github.event_name }}
+          push: ${{ inputs.publish }}
+          tags: |
+            ${{ inputs.registry }}/${{ inputs.image_name }}:${{ steps.tag.outputs.image_tag }}
+            ${{ inputs.registry }}/${{ inputs.image_name }}:${{ steps.tag.outputs.full_sha }}
+            ${{ inputs.registry }}/${{ inputs.image_name }}:${{ steps.tag.outputs.short_sha }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

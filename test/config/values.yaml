@@ -1,0 +1,7 @@
+name: google-scheduled-api-call
+args:
+  host: google.com
+cron:
+  schedule: "* * * * *"
+image:
+  tag: 0.1.3

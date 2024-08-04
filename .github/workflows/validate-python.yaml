@@ -1,0 +1,70 @@
+name: Validate python Codebase
+on:
+  workflow_call:
+    inputs:
+      python_version:
+        description: Python version to use
+        type: string
+        default: "3.10.14"
+      poetry_version:
+        description: Poetry version to use
+        type: string
+        default: "1.4.2"
+      directory:
+        description: Root directory for validation
+        type: string
+        default: "."
+      cache_key_file:
+        description: File to use for cache key (defaults to <directory>/poetry.lock)
+        type: string
+        default: ""
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: read
+jobs:
+  validate-python:
+    name: Validate (format, lint, type analysis)
+    # NOTE: setup python not working on ARM
+    # runs-on: [self-hosted, qa, ubuntu]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{inputs.python_version}}
+      - name: Install and configure poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{inputs.poetry_version}}
+          # use these settings to enable cached dependencies
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Compute a more dynamic cache key
+        run: |
+          CACHE_PREFIX="venv-${{ github.repository_id }}-${{ runner.os }}-${{ inputs.python_version }}"
+          CACHE_HASH_FILE=${{ inputs.directory }}/poetry.lock
+          [[ -n "${{ inputs.cache_key_file }}" ]] \
+            && [[ -f "${{ inputs.cache_key_file }}" ]] \
+            && CACHE_HASH_FILE=${{inputs.cache_key_file}}
+          CACHE_HASH=$( sha256sum "${CACHE_HASH_FILE}" | awk '{ print $1 }' )
+          echo "DYNAMIC_CACHE_KEY=${CACHE_PREFIX}-${CACHE_HASH}" >> $GITHUB_ENV
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: ${{ env.DYNAMIC_CACHE_KEY }}
+      - name: Always install dependencies (aided by cache)
+        run: poetry install --no-interaction --no-root
+      - name: Validate python code
+        run: |
+          poetry run isort ${{inputs.directory}} --check-only
+          poetry run black ${{inputs.directory}} --check
+          [[ -f ${{inputs.directory}}/.flake8 ]] \
+            && poetry run flake8 ${{inputs.directory}} \
+            || echo "WARNING: skipping linter, no configuration in \"${{inputs.directory}}\""
+          [[ $( find ${{inputs.directory}} -type f -name py.typed | wc -l ) -ge 1 ]] \
+            && poetry run mypy ${{inputs.directory}} \
+            || echo "WARNING: skipping type analysis, no sentinel in \"${{inputs.directory}}/*\""
