@@ -37,9 +37,10 @@ on:
         type: boolean
         default: true
 permissions:
-  id-token: write
   contents: read
   pull-requests: read
+  id-token: write
+  packages: write
 jobs:
   containerize:
     runs-on: ubuntu-latest
