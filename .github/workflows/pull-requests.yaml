@@ -1,10 +1,7 @@
-name: Pull Requests and main Merges
+name: Pull Requests
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-  push:
-    branches:
-      - main
 permissions:
   id-token: write
   contents: write
@@ -29,4 +26,4 @@ jobs:
   containerize:
     uses: ./.github/workflows/build.yaml
     with:
-      publish: ${{ github.ref == 'refs/heads/main' }}
+      publish: false
